@@ -48,9 +48,9 @@ yarn
 
 Copy the contents of `.env.example` to `.env.local` in the root directory.
 
-#### 3. (Optional) Cache events and blocks.
+#### 3. Cache events and blocks.
 
-You will need to add your own infura key to `.env.local`. You can get an infura key from https://infura.io/. If you don't run this step, you will use events and blocks up to the point of the last commit.
+(Optional) You can use your own infura node (instead of the public Optimism node) by adding an infura key to `INFURA_KEY` in `.env.local` and setting `USE_INFURA=true`. You can get an infura key at https://infura.io/.
 
 Run the following script:
 
