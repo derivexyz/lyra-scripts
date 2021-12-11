@@ -1,0 +1,48 @@
+{
+  "name": "lyra-event-cache",
+  "version": "1.0.0",
+  "description": "an API cache events and handle optimism regenesis events",
+  "main": "index.js",
+  "scripts": {
+    "build": "rimraf ./dist && tsc -p .",
+    "cache-events-and-blocks": "ts-node src/cache/cacheEventsAndBlocks.ts",
+    "sync-rewards": "ts-node src/rewards/index.ts sync",
+    "export-rewards": "ts-node src/rewards/index.ts export",
+    "export-total-rewards": "ts-node src/rewards/exportTotalRewards.ts",
+    "purge-rewards": "ts-node src/rewards/purgeRewards.ts",
+    "sync-pool-stats": "ts-node src/pools/syncPoolStats.ts",
+    "sync-snx-staking-data": "ts-node src/rewards/snx-staking/syncSNXData.ts",
+    "sync-dai-susd-lp-data": "ts-node src/rewards/dai-susd-lp/syncDAISUSDLPData.ts"
+  },
+  "author": "Lyra Finance",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "csvtojson": "^2.0.10",
+    "dotenv": "^8.2.0",
+    "ethers": "^5.0.3",
+    "express": "^4.17.1",
+    "mathjs": "^10.0.0",
+    "mongodb": "^3.5.6",
+    "nullthrows": "^1.1.1",
+    "objects-to-csv": "^1.3.6"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.4.0",
+    "@types/bson": "^4.2.0",
+    "@types/lodash": "^4.14.177",
+    "@types/mongodb": "^3.5.6",
+    "@types/node": "^13.13.52",
+    "@types/objects-to-csv": "^1.3.1",
+    "@types/ws": "^7.4.6",
+    "@uniswap/v3-core": "^1.0.0",
+    "better-sqlite3": "^7.4.3",
+    "node-mongotools": "^1.2.0",
+    "nodemon": "^2.0.3",
+    "prettier": "^2.4.1",
+    "rimraf": "^3.0.2",
+    "ts-node": "^8.8.2",
+    "ts-node-dev": "^1.0.0-pre.44",
+    "typescript": "^3.8.3"
+  }
+}

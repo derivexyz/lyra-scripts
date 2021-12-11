@@ -1,0 +1,8 @@
+.env.prod
+.env.local
+.idea
+.DS_Store
+node_modules
+out/*
+dist
+cron*
