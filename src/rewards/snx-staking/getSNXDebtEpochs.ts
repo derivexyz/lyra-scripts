@@ -154,6 +154,11 @@ export default async function getSNXDebtEpochs(
       const debtState = epochToDebtState[epoch]
       const debtStateTimestamp = debtState.timestamp
 
+      // if the addresses' activeFrom date is after the debtStateTimestamp we skip
+      if (acceptedAddresses[address]?.activeFrom > debtStateTimestamp) {
+        continue
+      }
+
       // find the first debt snapshot index that has a timestamp smaller than the current debtState timestamp
       // that will be the debt snapshot closest to the debt state
       let newestToOldestDebtSnapshots = filledDebtSnapshots.sort((a: any, b: any) => b.timestamp - a.timestamp)

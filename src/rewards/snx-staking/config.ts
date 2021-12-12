@@ -11,7 +11,7 @@ export type SNXStakingConfig = {
 
 const CONFIG: SNXStakingConfig = {
   retroStartDate: 1631491200,
-  retroEndDate: 1634256000,
+  retroEndDate: 1633824000,
   retroRewardAmount: 1000000,
   stakingStartDate: 1635465600,
   stakingEndDate: 1639094400,
