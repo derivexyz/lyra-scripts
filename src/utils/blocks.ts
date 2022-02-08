@@ -140,6 +140,13 @@ export async function updateBlocksToLatest(
   );
 }
 
+export async function getCachedMax(blocksDb: any) {
+  return (
+    blocksDb.prepare("SELECT MAX(blockNumber) as maxBlock FROM blockNums").get()
+      ?.maxBlock || 0
+  );
+}
+
 export async function updateBlocksToLatestAndGetAll(deployment: Deployments) {
   const network = deployment.split("-")[0];
   let blocksDb = getBlocksDb(network);

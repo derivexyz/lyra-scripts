@@ -1,5 +1,5 @@
 import initializeDB, { getDB } from '../utils/mongo'
-import { Deployments, getEventCollectionName, getStatsCollectionName, loadArgsAndEnv } from '../utils'
+import { Deployments, getEventCollectionName, getStatsCollectionName } from '../utils'
 import console from 'console'
 import { ethers } from 'ethers'
 import { Db } from 'mongodb'
@@ -7,8 +7,6 @@ import { getLyraContract } from '../utils/transactions'
 import { loadContractNamesForDeployment, loadLyraContractDeploymentBlock } from '../utils/parseFiles'
 import { getBlocksDb, updateBlocksToLatest } from '../utils/blocks'
 import { getIsPostRegenesis, PRE_REGENESIS_ADD } from '../utils/isPostRegenesis'
-
-loadArgsAndEnv(process.argv)
 
 const EVENT_BATCH_SIZE = 1
 const EVENT_BLOCK_BATCH = 10000
@@ -190,7 +188,7 @@ export async function cacheAllEventsForLyraContract(
   await Promise.all(promises)
 }
 
-async function cacheAllEvents() {
+export default async function cacheEventsAndBlocks() {
   const startTime = Date.now()
   await initializeDB()
   const db = await getDB()
@@ -228,14 +226,3 @@ async function cacheAllEvents() {
   }
   console.log(`Done in ${(Date.now() - startTime) / 1000} sec`)
 }
-
-cacheAllEvents()
-  .then(() => {
-    console.log('Success')
-    process.exit(0)
-  })
-  .catch(e => {
-    console.log(e)
-    console.log('Fail')
-    process.exit(1)
-  })

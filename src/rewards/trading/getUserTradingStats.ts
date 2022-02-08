@@ -103,7 +103,9 @@ export default async function getUserTradingStats(
   > = positionEvents.reduce((traderPositions, event) => {
     const { listingId, tradeType: tradeTypeStr, trader, amount: amountStr } = event.args
     const tradeType = parseInt(tradeTypeStr)
-    const positionID = `${listingId}-${tradeType}`
+    // convert to actual token ID
+    const positionID = parseInt(listingId) + tradeType
+
     const isOpen = event.isOpen // injected
     const isLong = tradeType === TradeType.LONG_CALL || tradeType === TradeType.LONG_PUT
     const isCall = tradeType === TradeType.LONG_CALL || tradeType === TradeType.SHORT_CALL
@@ -134,6 +136,7 @@ export default async function getUserTradingStats(
     let collateralAmount = isOpen ? amount : -amount
     if (!isLong) {
       if (isCall) {
+        // here is where we figure out the token transfers
         collateralCounter = collateralAmount * timeToExpiry
       } else {
         collateralCounter = collateralAmount * timeToExpiry * strike
@@ -166,6 +169,120 @@ export default async function getUserTradingStats(
     }
     return traderPositions
   }, {})
+
+  // Catch TransferSingle events
+  const [positionTransferredSingle] = await Promise.all([
+    getEventsFromLyraContract('mainnet-ovm', 'OptionToken', 'TransferSingle', market)
+  ])
+
+  const sortedTransfers = positionTransferredSingle
+  .filter(event => event.timestamp >= startTimestamp && event.timestamp <= maxExpiryTimestamp && 
+    event.args.from !== '0x0000000000000000000000000000000000000000' && 
+    event.args.to !== '0x0000000000000000000000000000000000000000')
+  .sort((a, b) => a.timestamp - b.timestamp)
+
+  console.log(`Number of transfers: ${sortedTransfers.length}`)
+
+  sortedTransfers.forEach(transfer => {
+    const { operator, from, to, id: positionIDStr, value: amountStr } = transfer.args
+
+
+    const positionID = parseInt(positionIDStr)
+    const listingId = traderPositions[from][positionID].listingId
+    const listing = nullthrows(listings[listingId.toString()])
+    const timeToExpiry = listing.expiry - transfer.timestamp
+    const fromTraderPosition = traderPositions[from][positionID]
+    const toTraderPosition = traderPositions[to][positionID]
+    const amount = parseInt(amountStr) / 1e18
+
+
+    if (traderPositions[to] == null) {
+      traderPositions[to] = {}
+    }
+    const currPosition = traderPositions[to][positionID]
+
+    if (currPosition == null) {
+      // add / subtract to position
+      traderPositions[to][positionID] = {
+        listingId: fromTraderPosition.listingId,
+        tradeType: fromTraderPosition.tradeType,
+        amount: 0,
+        fees: 0,
+        collateralCounter: 0,
+      }
+    }
+    
+    fromTraderPosition.amount -= amount
+    toTraderPosition.amount += amount
+
+    if (fromTraderPosition.tradeType == TradeType.SHORT_CALL) {
+      fromTraderPosition.collateralCounter -= amount * timeToExpiry
+      toTraderPosition.collateralCounter += amount * timeToExpiry
+    } else if (fromTraderPosition.tradeType == TradeType.SHORT_PUT) {
+      fromTraderPosition.collateralCounter -= amount * timeToExpiry * listing.strike
+      toTraderPosition.collateralCounter += amount * timeToExpiry * listing.strike
+    }
+  
+  })
+
+  // Catch TransferBatch events
+  const [positionTransferredBatch] = await Promise.all([
+    getEventsFromLyraContract('mainnet-ovm', 'OptionToken', 'TransferBatch', market)
+  ])
+
+  const sortedBatchTransfers = positionTransferredBatch
+  .filter(event => event.timestamp >= startTimestamp && event.timestamp <= maxExpiryTimestamp && 
+    event.args.from !== '0x0000000000000000000000000000000000000000' && 
+    event.args.to !== '0x0000000000000000000000000000000000000000')
+  .sort((a, b) => a.timestamp - b.timestamp)
+
+  console.log(`Number of batch transfers: ${sortedBatchTransfers.length}`)
+
+  sortedBatchTransfers.forEach(transfer => {
+    const { operator, from, to, id: positionIDStrs, value: amountStrs } = transfer.args
+
+    const zipped = positionIDStrs.map((positionIDStr: String, idx: number) => [positionIDStr, amountStrs[idx]])
+
+    if (traderPositions[to] == null) {
+      traderPositions[to] = {}
+    }
+
+    zipped.forEach((item: any) => {
+      const [positionIDStr, amountStr] = item;
+   
+      const positionID = parseInt(positionIDStr)
+      const listingId = traderPositions[from][positionID].listingId
+      const listing = nullthrows(listings[listingId.toString()])
+      const timeToExpiry = listing.expiry - transfer.timestamp
+      const fromTraderPosition = traderPositions[from][positionID]
+      const toTraderPosition = traderPositions[to][positionID]
+      const amount = parseInt(amountStr) / 1e18
+
+      const currPosition = traderPositions[to][positionID]
+
+      if (currPosition == null) {
+        // add / subtract to position
+        traderPositions[to][positionID] = {
+          listingId: fromTraderPosition.listingId,
+          tradeType: fromTraderPosition.tradeType,
+          amount: 0,
+          fees: 0,
+          collateralCounter: 0,
+        }
+      } 
+
+      fromTraderPosition.amount -= amount
+      toTraderPosition.amount += amount
+
+      if (fromTraderPosition.tradeType == TradeType.SHORT_CALL) {
+        fromTraderPosition.collateralCounter -= amount * timeToExpiry
+        toTraderPosition.collateralCounter += amount * timeToExpiry
+      } else if (fromTraderPosition.tradeType == TradeType.SHORT_PUT) {
+        fromTraderPosition.collateralCounter -= amount * timeToExpiry * listing.strike
+        toTraderPosition.collateralCounter += amount * timeToExpiry * listing.strike
+      }
+    })
+  })
 
   const result: UserTradingStats[] = Object.keys(traderPositions).map(address => {
     const positions = Object.values(traderPositions[address])

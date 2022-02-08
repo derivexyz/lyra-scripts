@@ -6,7 +6,7 @@ import { getEventsFromLyraContract } from '../../utils/events'
 const DAO_ADDRESS = '0xB6DACAE4eF97b4817d54df8e005269f509f803f9'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-export default async function getLyraLPRewards(
+export default async function getLyraLPRewardsWithLEAP14Bug(
   market: string,
   params: LyraLPRoundConfig
 ): Promise<
@@ -46,17 +46,20 @@ export default async function getLyraLPRewards(
 
   // calculate all liquidity certificate balances for the RoundStarted block
   const certificates: {
-    [key: number]: { value: number; owner: string; lastTransfer: number; lastModified: number; burnableAt: number }
+    [key: number]: { value: number; owner: string; lastTransfer: number }
   } = {}
 
   for (const dataModifiedEvent of dataModifiedEvents) {
     if (dataModifiedEvent.block <= roundStartedEvent.block) {
       certificates[dataModifiedEvent.args.certificateId] = {
-        value: 0,
+        value:
+          ((dataModifiedEvent.args.liquidity / expiryToTokenValue[dataModifiedEvent.args.enteredAt]) *
+            expiryToTokenValue[
+              roundStartedEvent.args.lastMaxExpiryTimestamp || roundStartedEvent.args.lastMaxExpiryTimestmp
+            ]) /
+          1e18,
         owner: '',
         lastTransfer: PRE_REGENESIS_ADD,
-        lastModified: PRE_REGENESIS_ADD,
-        burnableAt: 0,
       }
     }
   }
@@ -71,29 +74,11 @@ export default async function getLyraLPRewards(
     }
   }
 
-  for (const dataModified of dataModifiedEvents) {
-    if (dataModified.block > roundStartedEvent.block) {
-      continue
-    }
-    if (certificates[dataModified.args.certificateId].lastModified < dataModified.block) {
-      certificates[dataModified.args.certificateId].burnableAt = parseInt(dataModified.args.burnableAt)
-      certificates[dataModified.args.certificateId].value = ((dataModified.args.liquidity / expiryToTokenValue[dataModified.args.enteredAt]) *
-          expiryToTokenValue[roundStartedEvent.args.lastMaxExpiryTimestamp || roundStartedEvent.args.lastMaxExpiryTimestmp]) / 1e18;
-      certificates[dataModified.args.certificateId].lastModified = dataModified.block
-    }
-  }
-
   // calculate liquidity and rewards for all owners
   const liquidityPerOwner: Record<string, number> = {}
   for (const certificateId in certificates) {
     const certificate = certificates[certificateId]
     if ([DAO_ADDRESS, ZERO_ADDRESS].includes(certificate.owner)) {
-      continue
-    }
-    if (certificate.burnableAt == params.maxExpiryTimestamp) {
-      throw Error("Shouldn't happen")
-    }
-    if (certificate.burnableAt != 0) {
       continue
     }
     if (!liquidityPerOwner[certificate.owner]) {

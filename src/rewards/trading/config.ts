@@ -95,6 +95,59 @@ const CONFIG: TradingRoundConfig[] = [
       },
     },
   },
+  {
+    leap: "leap13.1",
+    deployment: "mainnet-ovm",
+    roundMaxExpiryTimestamp: 1643961600,
+    rewardCap: 1333333.33,
+    // TODO: change fee rates
+    markets: {
+      sETH: {
+        longFeeRewardRate: 0.8,
+        shortFeeRewardRate: 1,
+        shortPutDailyRewardRate: 0.002215043839,
+        shortCallDailyRewardRate: 7.121365944,
+      },
+      sLINK: {
+        longFeeRewardRate: 0.8,
+        shortFeeRewardRate: 1,
+        shortPutDailyRewardRate: 0.002325412397,
+        shortCallDailyRewardRate: 0.06185596977,
+      },
+      sBTC: {
+        longFeeRewardRate: 0.8,
+        shortFeeRewardRate: 1,
+        shortPutDailyRewardRate: 0.002353633422,
+        shortCallDailyRewardRate: 98.73492204,
+      },
+    },
+  },
+  {
+    leap: 'leap13.2',
+    deployment: 'mainnet-ovm',
+    roundMaxExpiryTimestamp: 1646380800,
+    rewardCap: 1333333.33,
+    markets: {
+      sETH: {
+        longFeeRewardRate: 0.8,
+        shortFeeRewardRate: 1,
+        shortPutDailyRewardRate:0.002397133029,
+        shortCallDailyRewardRate: 7.177016289,
+      },
+      sLINK: {
+        longFeeRewardRate: 0.8,
+        shortFeeRewardRate: 1,
+        shortPutDailyRewardRate: 0.003034485793,
+        shortCallDailyRewardRate: 0.05401384712,
+      },
+      sBTC: {
+        longFeeRewardRate: 0.8,
+        shortFeeRewardRate: 1,
+        shortPutDailyRewardRate: 0.002479106401,
+        shortCallDailyRewardRate: 102.635005,
+      },
+    },
+  },
 ];
 
 export default CONFIG;

@@ -2,11 +2,21 @@ import nullthrows from 'nullthrows'
 import initializeDB from '../utils/mongo'
 import { loadArgsAndEnv } from '../utils'
 import path from 'path'
+import * as Sentry from '@sentry/node'
 
 loadArgsAndEnv(process.argv)
 
 const COMMANDS = ['export', 'sync']
-const PROGRAMS = ['all', 'lyra-lp', 'retro-trading', 'trading', 'dai-susd-lp', 'snx-staking']
+const PROGRAMS = [
+  'all',
+  'lyra-lp',
+  'retro-trading',
+  'trading',
+  'community',
+  'dai-susd-lp',
+  'eth-lyra-lp',
+  'snx-staking',
+]
 const command = nullthrows(
   COMMANDS.find(c => c === process.argv[2]),
   'Invalid command: export, sync'
@@ -41,11 +51,20 @@ const exportOrSync = async () => {
   console.log('- End', endTime.toISOString())
 }
 
+if (process.env.SENTRY_DSN && process.env.NODE_ENV === 'production') {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 1.0,
+  })
+  console.log('init sentry')
+}
+
 exportOrSync()
   .then(() => {
     process.exit(0)
   })
   .catch(e => {
-    console.log(e)
-    process.exit(1)
+    Sentry.captureException(e)
+    Sentry.flush(2000)
+    throw e
   })

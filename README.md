@@ -1,6 +1,8 @@
 # Lyra Scripts
 
-Scripts built for the Lyra protocol:
+A series of scripts built for the Lyra protocol.
+
+Scripts:
 
 - `/src/rewards` scripts for off-chain allocation of $LYRA in various reward programs
 - `/src/pools` scripts for calculation of AMM statistics
@@ -44,13 +46,11 @@ mongorestore --uri="mongodb://localhost:27017" --username=foouser --password=foo
 yarn
 ```
 
-#### 2. Create .env.local file
+#### 2. Create a local `.env.local` file from `.env.example`.
 
-Copy the contents of `.env.example` to `.env.local` in the root directory.
+#### 3. (Optional) Cache events and blocks.
 
-#### 3. Cache events and blocks.
-
-(Optional) You can use your own infura node (instead of the public Optimism node) by adding an infura key to `INFURA_KEY` in `.env.local` and setting `USE_INFURA=true`. You can get an infura key at https://infura.io/.
+You will need to add your own infura key to `.env.local`. You can get an infura key from https://infura.io/. If you don't run this step, you will use events and blocks up to the point of the last commit.
 
 Run the following script:
 
@@ -70,9 +70,9 @@ yarn cache-events-and-blocks --env local
 
 These scripts calculate rewards for various ignition reward programs. You can read more about the programs here: https://docs.lyra.finance/tokenomics/ignition
 
-`<program>` = `lyra-lp, retro-trading, trading, dai-susd-lp, snx-staking`
+`<program>` = `lyra-lp, retro-trading, trading, dai-susd-lp, community, snx-staking`
 
-To export data for programs to `.csv` files in the `/out` directory, run the following script:
+To export data for programs to `.csv` files, create the `/out` directory and run the following script:
 
 ```
 yarn export-rewards <program> --env local
