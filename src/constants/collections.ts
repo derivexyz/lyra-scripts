@@ -1,7 +1,9 @@
 export enum Collections {
-  TradingRewardsUser = "TRADING_REWARDS_USER_NEW",
-  TradingRewardsStats = "TRADING_REWARDS_STATS_NEW",
-  RewardEvents = "REWARD_EVENTS",
-  RetroCommunityRewards = "RETRO_COMMUNITY_REWARDS",
-  PoolStatsSnapshots = "POOL_STATS_SNAPSHOTS",
+  AvalonGlobalRewardsEpoch ='AVALON_GLOBAL_REWARDS_EPOCH',
+  AvalonAccountRewardsEpoch = 'AVALON_ACCOUNT_REWARDS_EPOCH'
+}
+
+export enum FirebaseCollections {
+  AvalonGlobalRewardsEpoch ='AVALON_GLOBAL_REWARDS_EPOCH',
+  AvalonAccountRewardsEpoch = 'AVALON_ACCOUNT_REWARDS_EPOCH'
 }

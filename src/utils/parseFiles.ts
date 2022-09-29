@@ -4,30 +4,10 @@ import path from 'path';
 import {Deployments} from "./index";
 
 function getLyraFilePath(network: string) {
-  if (network == 'kovan-ovm' || network == 'kovan-ovm-testnet-comp') {
+  if (network.split("-")[0] == 'kovan') {
     return path.join(__dirname, '../../deployments/', network, '/lyra.realPricing.json');
   }
   return path.join(__dirname, '../../deployments/', network, '/lyra.json');
-}
-
-export function loadContractNamesForDeployment(network: Deployments) {
-  const filePath = getLyraFilePath(network);
-  const data = require(filePath);
-
-  const result: { market?: string, contractName: string }[] = []
-
-  for (const target in data.targets) {
-    if (target === "markets") {
-      for (const market in data.targets.markets) {
-        for (const mTarget in data.targets.markets[market]) {
-          result.push({market, contractName: mTarget})
-        }
-      }
-    } else {
-      result.push({contractName: target});
-    }
-  }
-  return result;
 }
 
 
@@ -51,16 +31,30 @@ export function loadLyraContractData(network: Deployments, name: string, market?
   }
 }
 
-export function loadLyraContractDeploymentBlock(network: Deployments, name: string, market?: string) {
+export function lookupContractForDeployment(
+  network: Deployments, address: string
+): [string, string | undefined] { // [contract name, market]
   const filePath = getLyraFilePath(network);
   const data = require(filePath);
   try {
-    if (market) {
-      return data.targets.markets[market][name].blockNumber;
+    for (const key of Object.keys(data.targets)) {
+      if (key === "markets") {
+        for (const market of Object.keys(data.targets.markets)) {
+          for (const contract of Object.keys(data.targets.markets[market])) {
+            if (data.targets.markets[market][contract].address.toLowerCase() == address.toLowerCase()) {
+              return [contract, market];
+            }
+          }
+        }
+      } else {
+        if (data.targets[key].address.toLowerCase() == address.toLowerCase()) {
+          return [key, undefined];
+        }
+      }
     }
-    return data.targets[name].blockNumber;
+    throw Error("contract not found");
   } catch (e) {
-    console.log({ filePath, name, market });
+    console.log({ filePath, name });
     throw e;
   }
 }
