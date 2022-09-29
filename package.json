@@ -10,7 +10,6 @@
     "export-rewards": "ts-node src/rewards/index.ts export",
     "export-total-rewards": "ts-node src/rewards/exportTotalRewards.ts",
     "purge-rewards": "ts-node src/rewards/purgeRewards.ts",
-    "sync-pool-stats": "ts-node src/pools/syncPoolStats.ts",
     "sync-snx-staking-data": "ts-node src/rewards/snx-staking/syncSNXData.ts",
     "sync-dai-susd-lp-data": "ts-node src/rewards/dai-susd-lp/syncDAISUSDLPData.ts"
   },

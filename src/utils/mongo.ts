@@ -13,6 +13,10 @@ const mongoConfig: MongoClientOptions = {
 }
 
 const initializeDB = async () => {
+  console.log('Connecting to MongoDB...');
+  // console.log('process mongoUsername', process.env.MONGO_USERNAME);
+  // console.log('process mongoPassword', process.env.MONGO_PASSWORD);
+  // console.log('process mongo url', process.env.MONGO_URL);
   const MONGO_URI: any =
     process.env.NODE_ENV === 'development'
       ? `mongodb://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_URL}`

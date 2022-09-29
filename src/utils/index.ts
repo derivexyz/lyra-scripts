@@ -1,8 +1,7 @@
 import dotenv from "dotenv";
 import {ethers} from "ethers";
 
-export type Deployments = "kovan-ovm" | "mainnet-ovm" | "mainnet-ovm-old";
-export const deployments: Deployments[] = ['kovan-ovm', 'mainnet-ovm', 'mainnet-ovm-old']
+export type Deployments = "kovan-ovm-avalon" | 'mainnet-ovm-avalon';
 
 export async function sleep(ms: number) {
   return new Promise((resolve) => {
@@ -29,15 +28,6 @@ export function loadArgsAndEnv(argv: string[]) {
   }
 
   return result;
-}
-
-export function getEventCollectionName(deployment: Deployments, contractName: string, eventName: string, market?: string) {
-  // TODO: whoops extra `-`
-  return `${deployment}-${market ? `-${market}` : ''}-${contractName}-${eventName}`;
-}
-
-export function getStatsCollectionName(deployment: Deployments) {
-  return `${deployment}-stats`;
 }
 
 export function getOVMRpcUrl(deployment: Deployments) {
