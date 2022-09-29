@@ -1,0 +1,1 @@
+export const DAY_SEC = 24 * 60 * 60;
