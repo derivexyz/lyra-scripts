@@ -16,9 +16,11 @@ export type TradingRewardsConfig = {
     fixedOpPrice: number
   }
   shortCollatRewards: {
-    tenDeltaRebatePerOptionDay: number,
-    ninetyDeltaRebatePerOptionDay: number,
-    longDatedPenalty: number
+    [market: string]: {
+      tenDeltaRebatePerOptionDay: number,
+      ninetyDeltaRebatePerOptionDay: number,
+      longDatedPenalty: number
+    }
   }
 }
 

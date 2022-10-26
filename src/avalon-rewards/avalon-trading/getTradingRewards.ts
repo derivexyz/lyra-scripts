@@ -11,6 +11,7 @@ import { AllDeltaSnapshots } from './getAllOptionDeltaSnapshots'
 import { AllTrades, TradeResult } from './getAllTrades'
 import { AllStrikeDetails } from './getAllStrikeDetails'
 import { AllTransfers } from './getAllOptionTransfers'
+import { ethers } from 'ethers'
 
 export type TradingRewards = {
   totalLyraRebate: number,
@@ -98,7 +99,6 @@ export async function getTradingRewards(
       if (trade.timestamp < startTs || trade.timestamp >= endTs) {
         continue;
       }
-
       const tradingRebate = await calculateTradingRebate(trade, rewardsConfig, cooldownEvents);
       if (!userRebates[trade.trader]) {
         userRebates[trade.trader] = {
@@ -124,7 +124,6 @@ export async function getTradingRewards(
       // Add in total fees to stats
       userRebates[trade.trader].fees += tradingRebate.fees;
       tradingRewards.totalFees += tradingRebate.fees;
-
       // Add in rebate dollars to stats
       tradingRewards.totalUnscaledRebateDollars += tradingRebate.rebate;
       tradingRewards.totalTradingUnscaledRebateDollars += tradingRebate.rebate;
@@ -132,15 +131,15 @@ export async function getTradingRewards(
       userRebates[trade.trader].totalRebateDollars += tradingRebate.rebate;
 
       // Calculate lyra/op amounts
-      const lyraRebate = tradingRebate.rebate * rewardsConfig.rewards.lyraPortion / rewardsConfig.rewards.fixedLyraPrice;
-      const opRebate = tradingRebate.rebate * (1 - rewardsConfig.rewards.lyraPortion) / rewardsConfig.rewards.fixedOpPrice
+      const lyraRebate = (tradingRebate.rebate * rewardsConfig.rewards.lyraPortion / rewardsConfig.rewards.fixedLyraPrice) || 0;
+      const opRebate = (tradingRebate.rebate * (1 - rewardsConfig.rewards.lyraPortion) / rewardsConfig.rewards.fixedOpPrice) || 0;
 
-      userRebates[trade.trader].lyraRebate += lyraRebate;
-      userRebates[trade.trader].opRebate += opRebate;
-      tradingRewards.tradingRebates.totalLyraRebate += lyraRebate;
-      tradingRewards.tradingRebates.totalOpRebate += opRebate;
-      tradingRewards.totalLyraRebate += lyraRebate;
-      tradingRewards.totalOpRebate += opRebate;
+      userRebates[trade.trader].lyraRebate += (lyraRebate >= 0 ? lyraRebate : 0);
+      userRebates[trade.trader].opRebate += (opRebate >= 0 ? opRebate : 0);
+      tradingRewards.tradingRebates.totalLyraRebate += (lyraRebate >= 0 ? lyraRebate : 0);
+      tradingRewards.tradingRebates.totalOpRebate += (opRebate >= 0 ? opRebate : 0);
+      tradingRewards.totalLyraRebate += (lyraRebate >= 0 ? lyraRebate : 0);
+      tradingRewards.totalOpRebate += (opRebate >= 0 ? opRebate : 0);
     }
 
   }
@@ -171,27 +170,27 @@ export async function getTradingRewards(
       };
     }
 
-    tradingRewards.shortCollat.totalShortCallSeconds += shortCollatRewards[user].totalShortCallAmtSec;
-    tradingRewards.shortCollat.totalShortPutSeconds += shortCollatRewards[user].totalShortPutAmtSec;
-    userRebates[user].totalShortCallSeconds += shortCollatRewards[user].totalShortCallAmtSec;
-    userRebates[user].totalShortPutSeconds += shortCollatRewards[user].totalShortPutAmtSec;
+    tradingRewards.shortCollat.totalShortCallSeconds += (shortCollatRewards[user].totalShortCallAmtSec > 0 ? shortCollatRewards[user].totalShortCallAmtSec : 0);
+    tradingRewards.shortCollat.totalShortPutSeconds += (shortCollatRewards[user].totalShortPutAmtSec > 0 ? shortCollatRewards[user].totalShortPutAmtSec : 0);
+    userRebates[user].totalShortCallSeconds += (shortCollatRewards[user].totalShortCallAmtSec > 0 ? shortCollatRewards[user].totalShortCallAmtSec : 0);
+    userRebates[user].totalShortPutSeconds += (shortCollatRewards[user].totalShortPutAmtSec > 0 ? shortCollatRewards[user].totalShortPutAmtSec : 0);
 
     // add in total reward dollars to stats
-    tradingRewards.totalUnscaledRebateDollars += shortCollatRewards[user].totalRewardDollars;
-    tradingRewards.totalCollatUnscaledRebateDollars += shortCollatRewards[user].totalRewardDollars;
-    userRebates[user].totalCollatRebateDollars += shortCollatRewards[user].totalRewardDollars;
-    userRebates[user].totalRebateDollars += shortCollatRewards[user].totalRewardDollars;
+    tradingRewards.totalUnscaledRebateDollars += (shortCollatRewards[user].totalRewardDollars > 0 ? shortCollatRewards[user].totalRewardDollars : 0);
+    tradingRewards.totalCollatUnscaledRebateDollars += (shortCollatRewards[user].totalRewardDollars > 0 ? shortCollatRewards[user].totalRewardDollars : 0);
+    userRebates[user].totalCollatRebateDollars += (shortCollatRewards[user].totalRewardDollars > 0 ? shortCollatRewards[user].totalRewardDollars : 0);
+    userRebates[user].totalRebateDollars += (shortCollatRewards[user].totalRewardDollars > 0 ? shortCollatRewards[user].totalRewardDollars : 0);
 
     // Calculate lyra/op rebates
     const lyraRebate = shortCollatRewards[user].totalRewardDollars * rewardsConfig.rewards.lyraPortion / rewardsConfig.rewards.fixedLyraPrice;
     const opRebate = shortCollatRewards[user].totalRewardDollars * (1 - rewardsConfig.rewards.lyraPortion) / rewardsConfig.rewards.fixedOpPrice
 
-    userRebates[user].opRebate += opRebate;
-    userRebates[user].lyraRebate += lyraRebate;
-    tradingRewards.shortCollat.totalLyraRebate += lyraRebate;
-    tradingRewards.shortCollat.totalOpRebate += opRebate;
-    tradingRewards.totalLyraRebate += lyraRebate;
-    tradingRewards.totalOpRebate += opRebate;
+    userRebates[user].opRebate += (opRebate > 0 ? opRebate : 0);
+    userRebates[user].lyraRebate += (lyraRebate > 0 ? lyraRebate : 0);
+    tradingRewards.shortCollat.totalLyraRebate += (lyraRebate > 0 ? lyraRebate : 0);
+    tradingRewards.shortCollat.totalOpRebate += (opRebate > 0 ? opRebate : 0);
+    tradingRewards.totalLyraRebate += (lyraRebate > 0 ? lyraRebate : 0);
+    tradingRewards.totalOpRebate += (opRebate > 0 ? opRebate : 0);
   }
 
   // scale down rewards if cap reached and compute final rebate rate
@@ -298,22 +297,23 @@ function calculateShortCollatRewards(startTs: number, endTs: number, latestTs: n
         const callDelta = snaps[i].delta;
 
         let callReward;
-        let putReward
+        let putReward;
+        const marketShortCollatRewards = rewardsConfig.shortCollatRewards[market]
         if (callDelta > 0.1 && callDelta < 0.9) {
-          const rewardsDiff = rewardsConfig.shortCollatRewards.ninetyDeltaRebatePerOptionDay - rewardsConfig.shortCollatRewards.tenDeltaRebatePerOptionDay
-          callReward = rewardsConfig.shortCollatRewards.tenDeltaRebatePerOptionDay + (rewardsDiff * ((callDelta - 0.1) / 0.8))
-          putReward = rewardsConfig.shortCollatRewards.tenDeltaRebatePerOptionDay + rewardsDiff - (rewardsDiff * ((callDelta - 0.1) / 0.8))
+          const rewardsDiff = marketShortCollatRewards.ninetyDeltaRebatePerOptionDay - marketShortCollatRewards.tenDeltaRebatePerOptionDay
+          callReward = marketShortCollatRewards.tenDeltaRebatePerOptionDay + (rewardsDiff * ((callDelta - 0.1) / 0.8))
+          putReward = marketShortCollatRewards.tenDeltaRebatePerOptionDay + rewardsDiff - (rewardsDiff * ((callDelta - 0.1) / 0.8))
         } else if (callDelta <= 0.1) {
-          callReward = rewardsConfig.shortCollatRewards.tenDeltaRebatePerOptionDay;
-          putReward = rewardsConfig.shortCollatRewards.ninetyDeltaRebatePerOptionDay;
+          callReward = marketShortCollatRewards.tenDeltaRebatePerOptionDay;
+          putReward = marketShortCollatRewards.ninetyDeltaRebatePerOptionDay;
         } else {
-          callReward = rewardsConfig.shortCollatRewards.ninetyDeltaRebatePerOptionDay;
-          putReward = rewardsConfig.shortCollatRewards.tenDeltaRebatePerOptionDay;
+          callReward = marketShortCollatRewards.ninetyDeltaRebatePerOptionDay;
+          putReward = marketShortCollatRewards.tenDeltaRebatePerOptionDay;
         }
 
         if (allStrikeDetails[market][strike].expiryTimestamp - countStart > (4 * 7 * 24 * 60 * 60)) {
-          callReward = callReward * rewardsConfig.shortCollatRewards.longDatedPenalty;
-          putReward = putReward * rewardsConfig.shortCollatRewards.longDatedPenalty;
+          callReward = callReward * marketShortCollatRewards.longDatedPenalty;
+          putReward = putReward * marketShortCollatRewards.longDatedPenalty;
         }
 
 
@@ -336,8 +336,8 @@ function calculateShortCollatRewards(startTs: number, endTs: number, latestTs: n
               totalShortPutAmtSec: 0
             }
           }
-          perUserRewards[user].totalRewardDollars += putReward * perUserShortPutAmtSec[user] / (24 * 60 * 60)
-          perUserRewards[user].totalShortPutAmtSec += perUserShortPutAmtSec[user];
+          perUserRewards[user].totalRewardDollars += (putReward * perUserShortPutAmtSec[user] / (24 * 60 * 60) || 0)
+          perUserRewards[user].totalShortPutAmtSec += (perUserShortPutAmtSec[user] || 0);
         }
       }
     }
@@ -379,7 +379,7 @@ function getAvgShortAmountPerUser(start: number, end: number, market: string, st
   }
 
   for (const transfer of (allTransfers[market] || [])) {
-    if (transfer.isLong || transfer.strikeId != strike) {
+    if (transfer.isLong || transfer.strikeId != strike || transfer.timestamp >= end) {
       continue;
     }
 
@@ -393,13 +393,16 @@ function getAvgShortAmountPerUser(start: number, end: number, market: string, st
       if (trade.timestamp > transfer.timestamp) {
         continue;
       }
-      // console.log(trade);
-      // console.log(transfer);
+      if (trade.timestamp >= end) {
+        continue;
+      }
+
       if (trade.timestamp == transfer.timestamp) {
-        // TODO: pretty sure this is handled fine, but will error and handle manually to make sure if it ever pops up
         console.warn("Trade timestamp == transfer timestamp. Need to fix to make sure order is maintained correctly.")
-        console.log(trade);
-        console.log(transfer);
+        // console.log(trade);
+        // console.log(transfer);
+        console.log({sizeAtTransfer});
+        // continue;
       }
       // we've found a match, but early exit if the strike doesnt match what we need...
       // highly inefficient
@@ -415,11 +418,12 @@ function getAvgShortAmountPerUser(start: number, end: number, market: string, st
     }
 
     if (sizeAtTransfer == 0) {
-      throw Error("sizeAtTransfer is 0, should be impossible")
+      // throw Error("sizeAtTransfer is 0, should be impossible")
+      console.warn("sizeAtTransfer is 0")
+      continue;
     }
 
     const fromTime = Math.min(Math.max(start, transfer.timestamp), end);
-    console.log({sizeAtTransfer, fromTime})
     if (transfer.isCall) {
       if (!perUserShortCallAmtSeconds[transfer.oldOwner]) {
         if (transfer.oldOwner === "0x9cB46586C9ec74E4D9De6cD67c760F89915bBcD8") {
@@ -447,59 +451,8 @@ function getAvgShortAmountPerUser(start: number, end: number, market: string, st
     }
   }
   //
-  // console.log(perUserShortCallAmtSeconds)
-  // console.log(perUserShortPutAmtSeconds)
+  // console.log(perUserShortCallAmtSeconds[])
+  // console.log(perUserShortPutAmtSeconds[])
 
   return [perUserShortCallAmtSeconds, perUserShortPutAmtSeconds];
 }
-
-
-//
-// calculateShortCollatRewards(
-//   1661474000, 1661904000, 1661904001, AVALON_CONFIG['mainnet-ovm-avalon'][0].tradingConfig,
-//   {'sETH':[{
-//       trader: '0x7694a2898a5d080E241f5033f443694d27Fd1A78',
-//       spotPriceFee: 5.50102617873,
-//       vegaUtilFee: 0,
-//       optionPriceFee: 2.058160336000614,
-//       varianceFee: 1.493898519317968,
-//       timestamp: 1656411969,
-//       strikeId: 156,
-//       positionId: 1981,
-//       size: 2,
-//       isLong: false,
-//       isCall: false
-//     }]},
-//   {
-//     'sETH': {'156': [
-//       { timestamp: 1660348800, delta: 0.31781545988249216 },
-//       { timestamp: 1660435200, delta: 0.32188652780240523 },
-//       { timestamp: 1660521600, delta: 0.304211179325455 },
-//       { timestamp: 1660608000, delta: 0.2897303595656878 },
-//       { timestamp: 1660694400, delta: 0.2673211335142328 },
-//       { timestamp: 1660780800, delta: 0.2500582281090298 },
-//       { timestamp: 1660867200, delta: 0.2520406589190745 },
-//       { timestamp: 1660953600, delta: 0.17899444321510757 },
-//       { timestamp: 1661040000, delta: 0.16625262114047124 },
-//       { timestamp: 1661126400, delta: 0.18411934936099728 },
-//       { timestamp: 1661212800, delta: 0.1806882544271815 },
-//       { timestamp: 1661299200, delta: 0.19626165956331965 },
-//       { timestamp: 1661385600, delta: 0.19294297359890208 },
-//       { timestamp: 1661472000, delta: 0.20391763514967126 },
-//       { timestamp: 1661558400, delta: 0.1400419768394571 },
-//       { timestamp: 1661644800, delta: 0.13492007250027582 },
-//       { timestamp: 1661731200, delta: 0.1110058404778036 }
-//     ]
-//     }
-//   },
-//   {
-//     'sETH': {'156': { strikeId: 156, expiryTimestamp: 1663920000, strikePrice: 1000 }}
-//   },
-//   {'sETH': [
-//       {
-//         positionId: 1981,
-//         oldOwner: '0x7694a2898a5d080E241f5033f443694d27Fd1A78',
-//         newOwner: '0xB957339804fea2829baBc79294D6e7615705Fd14',
-//         timestamp: 1661664800
-//       }
-//     ]});

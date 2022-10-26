@@ -272,11 +272,11 @@ export default async function syncAvalonRewards() {
       for (const market of Object.keys(epochConfig.MMVConfig)) {
         console.log("-", market)
 
-        rewardEpoch.scaledStkLyraDays[market] = MMVRewards[market].scaledStkLyraDays | 0
-        rewardEpoch.totalLpTokenDays[market] = MMVRewards[market].totalLPDays | 0
-        rewardEpoch.totalBoostedLpTokenDays[market] = MMVRewards[market].totalBoostedLPDays | 0
-        rewardEpoch.rewardedMMVRewards.LYRA[market] = MMVRewards[market].totalDistributedLyraRewards | 0
-        rewardEpoch.rewardedMMVRewards.OP[market] = MMVRewards[market].totalDistributedOPRewards | 0
+        rewardEpoch.scaledStkLyraDays[market] = MMVRewards[market].scaledStkLyraDays || 0
+        rewardEpoch.totalLpTokenDays[market] = MMVRewards[market].totalLPDays || 0
+        rewardEpoch.totalBoostedLpTokenDays[market] = MMVRewards[market].totalBoostedLPDays || 0
+        rewardEpoch.rewardedMMVRewards.LYRA[market] = MMVRewards[market].totalDistributedLyraRewards || 0
+        rewardEpoch.rewardedMMVRewards.OP[market] = MMVRewards[market].totalDistributedOPRewards || 0
         // aggregate all users & compile account reward epochs
 
         for (const user of Object.keys(MMVRewards[market].perUser)) {

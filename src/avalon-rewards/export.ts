@@ -42,13 +42,11 @@ export default async function exportAvalonRewards() {
       res['STAKING-OP'] = doc.inflationaryRewards.op || 0
       res['STAKING-LYRA'] = doc.inflationaryRewards.lyra || 0
 
-      console.log(doc.tradingRewards);
       res['TRADING-OP'] = doc.tradingRewards.opRebate || 0
       res['TRADING-LYRA'] = doc.tradingRewards.lyraRebate || 0
 
       perEpoch[id].push(res)
     }
-    console.log(perEpoch);
 
     for (const id of Object.keys(perEpoch)) {
       const outFile = `./out/complete-rewards-${id}.csv`;

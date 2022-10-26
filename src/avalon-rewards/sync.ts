@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import { AvalonLyraLPData, getMMVRewards } from './mmv/getMMVRewards';
 import { getStkLyraData } from './stkLyra/getStkLyraData';
 import {
@@ -16,14 +17,15 @@ import { getLyraContract } from '../utils/transactions'
 import { ethers, Event } from 'ethers'
 import { getAllTimeStampsForEvents } from '../utils/graphBlocks'
 import { Collections } from '../constants/collections'
-import { getAllTrades } from './avalon-trading/getAllTrades'
-import { getAllOptionCallDeltaSnapshots } from './avalon-trading/getAllOptionDeltaSnapshots'
-import { getAllStrikeDetails } from './avalon-trading/getAllStrikeDetails'
-import { getAllOptionTransfers } from './avalon-trading/getAllOptionTransfers'
+import { AllTrades, getAllTrades } from './avalon-trading/getAllTrades'
+import { AllDeltaSnapshots, getAllOptionCallDeltaSnapshots } from './avalon-trading/getAllOptionDeltaSnapshots'
+import { AllStrikeDetails, getAllStrikeDetails } from './avalon-trading/getAllStrikeDetails'
+import { AllTransfers, getAllOptionTransfers } from './avalon-trading/getAllOptionTransfers'
 import { User } from '@sentry/node'
 
 
 const DROP_DB = false;
+const READ_CACHED_DATA = true;
 
 export default async function syncAvalonRewards() {
 
@@ -42,89 +44,101 @@ export default async function syncAvalonRewards() {
     console.log(`==${" ".repeat(whitespace > 0 ? Math.floor(whitespace / 2) : 0)}${deploymentStr}${" ".repeat(whitespace > 0 ? Math.ceil(whitespace / 2) : 0)}==`)
     console.log("=".repeat(40))
 
-    /////
-    // Pre-cache all events needed for the deployment
-    console.log("\npre-caching events for all epochs...")
 
     const deployment: Deployments = deploymentStr as any;
-
     const maxBlock = await (await getNetworkProvider(deployment).getBlock('latest'))
 
-    const lyraSMProxy = await getLyraContract(deployment, 'LyraSafetyModuleProxy')
-    const lyraSM = (await getLyraContract(deployment, 'LyraSafetyModule')).attach(lyraSMProxy.address)
 
-    const cdEvents: Event[] = await lyraSM.queryFilter(lyraSM.filters.CooldownUpdated(null,null,null), 0, maxBlock.number);
-    console.log("cooldown events", cdEvents.length);
-    cdEvents.sort((a, b) => (a.blockNumber > b.blockNumber) ? 1 : -1)
+    let lpEvents: { [market: string]: LPEvent[] };
+    let allBlocks: { [key: number] : number; };
+    let cooldownEvents: CooldownEvent[];
+    let allTrades: AllTrades;
+    let allDeltaSnapshots: AllDeltaSnapshots;
+    let allStrikeDetails: AllStrikeDetails;
+    let allTransfers: AllTransfers;
 
-    const allEvents = [...cdEvents];
+    if (READ_CACHED_DATA) {
+      const data = require("./data/cachedData.json");
 
-    const allMarketLPEvents: {[market: string]: Event[]} = {};
-    for (let epochConfig of AVALON_CONFIG[deployment]) {
-      for (let market of Object.keys(epochConfig.MMVConfig)) {
-        if (!allMarketLPEvents[market]) {
-          // TODO: change this when migrating to goerli for testnet
-          const LiquidityToken = await getLyraContract(deployment, deployment.split("-")[0] == "kovan" ? 'LiquidityTokens' : "LiquidityToken", market)
-          allMarketLPEvents[market] = await LiquidityToken.queryFilter(
-            LiquidityToken.filters.Transfer(null, null, null), 0, maxBlock.number
-          );
-          console.log(`${market} Liquidity Token transfers: ${allMarketLPEvents[market].length}`)
-          allEvents.push(...allMarketLPEvents[market]);
+      lpEvents = data.lpEvents;
+      allBlocks = data.allBlocks;
+      cooldownEvents = data.cooldownEvents;
+      allTrades = data.allTrades;
+      allDeltaSnapshots = data.allDeltaSnapshots;
+      allStrikeDetails = data.allStrikeDetails;
+      allTransfers = data.allTransfers;
+    } else {
+      /////
+      // Pre-cache all events needed for the deployment
+      console.log("\npre-caching events for all epochs...")
+
+      const lyraSMProxy = await getLyraContract(deployment, 'LyraSafetyModuleProxy')
+      const lyraSM = (await getLyraContract(deployment, 'LyraSafetyModule')).attach(lyraSMProxy.address)
+
+      const cdEvents: Event[] = await lyraSM.queryFilter(lyraSM.filters.CooldownUpdated(null, null, null), 0, maxBlock.number);
+      console.log("cooldown events", cdEvents.length);
+      cdEvents.sort((a, b) => (a.blockNumber > b.blockNumber) ? 1 : -1)
+
+      const allEvents = [...cdEvents];
+
+      const allMarketLPEvents: { [market: string]: Event[] } = {};
+      for (let epochConfig of AVALON_CONFIG[deployment]) {
+        for (let market of Object.keys(epochConfig.MMVConfig)) {
+          if (!allMarketLPEvents[market]) {
+            // TODO: change this when migrating to goerli for testnet
+            const LiquidityToken = await getLyraContract(deployment, deployment.split("-")[0] == "kovan" ? 'LiquidityTokens' : "LiquidityToken", market)
+            allMarketLPEvents[market] = await LiquidityToken.queryFilter(
+              LiquidityToken.filters.Transfer(null, null, null), 0, maxBlock.number
+            );
+            console.log(`${market} Liquidity Token transfers: ${allMarketLPEvents[market].length}`)
+            allEvents.push(...allMarketLPEvents[market]);
+          }
         }
       }
-    }
 
-    const allBlocks = await getAllTimeStampsForEvents(allEvents);
+      allBlocks = await getAllTimeStampsForEvents(allEvents);
 
-    const lpEvents: {[market: string]: LPEvent[]} = {};
-    Object.keys(allMarketLPEvents).forEach(x => {
-      lpEvents[x] = allMarketLPEvents[x].map(y => {
+      lpEvents = {};
+      Object.keys(allMarketLPEvents).forEach(x => {
+        lpEvents[x] = allMarketLPEvents[x].map(y => {
+          return {
+            from: y.args?.from,
+            to: y.args?.to,
+            value: y.args?.value,
+            timestamp: allBlocks[y.blockNumber],
+            block: y.blockNumber,
+          }
+        })
+      })
+
+      cooldownEvents = cdEvents.map(x => {
         return {
-          from: y.args?.from,
-          to: y.args?.to,
-          value: y.args?.value,
-          timestamp: allBlocks[y.blockNumber],
-          block: y.blockNumber,
+          user: x.args?.user,
+          cooldownTimestamp: parseInt(x.args?.cooldownTimestamp.toString()),
+          balance: parseFloat(ethers.utils.formatEther(x.args?.balance)),
+          timestamp: allBlocks[x.blockNumber],
+          block: x.blockNumber
         }
       })
-    })
 
-    const cooldownEvents: CooldownEvent[] = cdEvents.map(x => {
-      return {
-        user: x.args?.user,
-        cooldownTimestamp: parseInt(x.args?.cooldownTimestamp.toString()),
-        balance: parseFloat(ethers.utils.formatEther(x.args?.balance)),
-        timestamp: allBlocks[x.blockNumber],
-        block: x.blockNumber
-      }
-    })
+      allTrades = await getAllTrades(deployment);
+      allDeltaSnapshots = await getAllOptionCallDeltaSnapshots(deployment);
+      allStrikeDetails = await getAllStrikeDetails(deployment);
+      allTransfers = await getAllOptionTransfers(deployment);
 
-    const allTrades = await getAllTrades(deployment);
-    const allDeltaSnapshots = await getAllOptionCallDeltaSnapshots(deployment);
-    const allStrikeDetails = await getAllStrikeDetails(deployment);
-    const allTransfers = await getAllOptionTransfers(deployment);
+      console.log("Done.")
 
-    console.log("Done.")
+      fs.writeFileSync('../cachedData.json', (JSON.stringify({
+        lpEvents,
+        allBlocks,
+        cooldownEvents,
+        allTrades,
+        allDeltaSnapshots,
+        allStrikeDetails,
+        allTransfers,
+      })), 'utf8');
+    }
 
-  //   console.log(JSON.stringify({
-  //     lpEvents,
-  //     allBlocks,
-  //     cooldownEvents,
-  //     allTrades,
-  //     allDeltaSnapshots,
-  //     allStrikeDetails,
-  //     allTransfers,
-  //   }))
-  //
-  //   const {
-  //     lpEvents,
-  //     allBlocks,
-  //     cooldownEvents,
-  //     allTrades,
-  //     allDeltaSnapshots,
-  //     allStrikeDetails,
-  //     allTransfers,
-  //   } = require("../testData.json");
   //
   //   console.log(allBlocks)
 
@@ -258,7 +272,7 @@ export default async function syncAvalonRewards() {
 
       for (const user of Object.keys(inflationRewards.perUser)) {
         // stkLyraDays['0xcD40C15Df1DeE1A88792f197672297A2224CC3a1']
-        if (user == '0xcD40C15Df1DeE1A88792f197672297A2224CC3a1') {
+        if (user == '0x6f2Eb15DC0dBf79c966adA52a4A737321Efb5704') {
           console.log(inflationRewards.perUser[user]);
         }
         const id = String([user, deployment, epochConfig.id])
@@ -272,9 +286,6 @@ export default async function syncAvalonRewards() {
           lyra: inflationRewards.perUser[user] ? inflationRewards.perUser[user].lyra : 0,
         };
       }
-
-      console.log(userRebates['0x9ba8c70a8fd922e97a4e78c46583742c7d41796c']);
-      console.log(userRebates[ethers.utils.getAddress('0x9ba8c70a8fd922e97a4e78c46583742c7d41796c')]);
 
       for (const user of Object.keys(userRebates)) {
         const id = String([user, deployment, epochConfig.id])
@@ -313,10 +324,18 @@ export default async function syncAvalonRewards() {
 
           accountEpochs[id].lpDays[market] = MMVRewards[market].perUser[user] ? MMVRewards[market].perUser[user].lpDays : 0
           accountEpochs[id].boostedLpDays[market] = MMVRewards[market].perUser[user] ? MMVRewards[market].perUser[user].boostedLpDays : 0
+          if (user === ethers.utils.getAddress('0x6f2Eb15DC0dBf79c966adA52a4A737321Efb5704')) {
+            console.log("found");
+            console.log(accountEpochs[id]);
+          }
+          if (user === '0x6f2Eb15DC0dBf79c966adA52a4A737321Efb5704') {
+            console.log("found");
+            console.log(accountEpochs[id]);
+          }
         }
       }
 
-      if (deploymentStr == "mainnet-ovm-avalon") { console.log(rewardEpoch) }
+      // if (deploymentStr == "mainnet-ovm-avalon") { console.log(rewardEpoch) }
       console.log(`${Object.keys(accountEpochs).length} account epochs to insert`);
       await insertOrUpdateGlobalRewardEpoch(rewardEpoch)
     }

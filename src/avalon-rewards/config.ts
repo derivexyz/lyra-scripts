@@ -57,9 +57,16 @@ export const AVALON_CONFIG: { [deployment: string]: AvalonConfig[] } = {
           fixedOpPrice: 1.5,
         },
         shortCollatRewards: {
-          tenDeltaRebatePerOptionDay: 0,
-          ninetyDeltaRebatePerOptionDay: 0,
-          longDatedPenalty: 0.5,
+          sBTC: {
+            tenDeltaRebatePerOptionDay: 0,
+            ninetyDeltaRebatePerOptionDay: 0,
+            longDatedPenalty: 0.5,
+          },
+          sETH: {
+            tenDeltaRebatePerOptionDay: 0,
+            ninetyDeltaRebatePerOptionDay: 0,
+            longDatedPenalty: 0.5,
+          }
         },
       },
       MMVConfig: {
@@ -103,9 +110,16 @@ export const AVALON_CONFIG: { [deployment: string]: AvalonConfig[] } = {
           fixedOpPrice: 1.14,
         },
         shortCollatRewards: {
-          tenDeltaRebatePerOptionDay: 0,
-          ninetyDeltaRebatePerOptionDay: 0,
-          longDatedPenalty: 0.5,
+          sBTC: {
+            tenDeltaRebatePerOptionDay: 0,
+            ninetyDeltaRebatePerOptionDay: 0,
+            longDatedPenalty: 0.5,
+          },
+          sETH: {
+            tenDeltaRebatePerOptionDay: 0,
+            ninetyDeltaRebatePerOptionDay: 0,
+            longDatedPenalty: 0.5,
+          }
         },
       },
       MMVConfig: {
@@ -156,9 +170,16 @@ export const AVALON_CONFIG: { [deployment: string]: AvalonConfig[] } = {
           fixedOpPrice: 1.20,
         },
         shortCollatRewards: {
-          tenDeltaRebatePerOptionDay: 0.1,
-          ninetyDeltaRebatePerOptionDay: 0.2,
-          longDatedPenalty: 0.5,
+          sBTC: {
+            tenDeltaRebatePerOptionDay: 0.1,
+            ninetyDeltaRebatePerOptionDay: 0.2,
+            longDatedPenalty: 0.5,
+          },
+          sETH: {
+            tenDeltaRebatePerOptionDay: 0.1,
+            ninetyDeltaRebatePerOptionDay: 0.2,
+            longDatedPenalty: 0.5,
+          }
         },
       },
       MMVConfig: {
@@ -218,13 +239,20 @@ export const AVALON_CONFIG: { [deployment: string]: AvalonConfig[] } = {
           floorTokenPriceOP: 0.1,
           floorTokenPriceLyra: 0.05,
           lyraPortion: 0.10,
-          fixedLyraPrice: 0.114,
-          fixedOpPrice: 1.20,
+          fixedLyraPrice: 0.166,
+          fixedOpPrice: 0.92,
         },
         shortCollatRewards: {
-          tenDeltaRebatePerOptionDay: 0.1,
-          ninetyDeltaRebatePerOptionDay: 0.2,
-          longDatedPenalty: 0.5,
+          sBTC: {
+            tenDeltaRebatePerOptionDay: 0.1,
+            ninetyDeltaRebatePerOptionDay: 0.2,
+            longDatedPenalty: 0.5,
+          },
+          sETH: {
+            tenDeltaRebatePerOptionDay: 0.1,
+            ninetyDeltaRebatePerOptionDay: 0.2,
+            longDatedPenalty: 0.5,
+          }
         },
       },
       MMVConfig: {
@@ -284,13 +312,25 @@ export const AVALON_CONFIG: { [deployment: string]: AvalonConfig[] } = {
           floorTokenPriceOP: 0.1,
           floorTokenPriceLyra: 0.05,
           lyraPortion: 0.10,
-          fixedLyraPrice: 0.114,
-          fixedOpPrice: 1.20,
+          fixedLyraPrice: 0.166, // TODO: update these
+          fixedOpPrice: 0.92,
         },
         shortCollatRewards: {
-          tenDeltaRebatePerOptionDay: 0.1,
-          ninetyDeltaRebatePerOptionDay: 0.2,
-          longDatedPenalty: 0.5,
+          sBTC: {
+            tenDeltaRebatePerOptionDay: 0.1,
+            ninetyDeltaRebatePerOptionDay: 0.2,
+            longDatedPenalty: 0.5,
+          },
+          sETH: {
+            tenDeltaRebatePerOptionDay: 0.1,
+            ninetyDeltaRebatePerOptionDay: 0.2,
+            longDatedPenalty: 0.5,
+          },
+          sSOL: {
+            tenDeltaRebatePerOptionDay: 0.1,
+            ninetyDeltaRebatePerOptionDay: 0.2,
+            longDatedPenalty: 0.5,
+          }
         },
       },
       MMVConfig: {
@@ -311,6 +351,176 @@ export const AVALON_CONFIG: { [deployment: string]: AvalonConfig[] } = {
         sSOL: {
           LYRA: 0,
           OP: 4375,
+          x: 0.5,
+          totalStkScaleFactor: 0.1,
+          ignoreList: [],
+        },
+      },
+      stakingConfig: {
+        totalRewards: {
+          LYRA: 460273.9726027397,
+          OP: 11506.8493150685,
+        },
+      },
+    },
+    {
+      id: 'epoch-6',
+      startTimestamp: 1665532800,
+      // NOTE: endTimestamp must equal startTimestamp of next epoch otherwise you could miss trades/double count trades
+      endTimestamp: 1666742400,
+      globalIgnoreList: ['0xB6DACAE4eF97b4817d54df8e005269f509f803f9', '0xD4C00FE7657791C2A43025dE483F05E49A5f76A6', '0x64AA025819321E97Cd829b9b6c45A1424eF9a80b'],
+      enabledTradingRewardMarkets: ['sETH', 'sBTC', 'sSOL'],
+      tradingConfig: {
+        useRebateTable: true,
+        rebateRateTable: [
+          { cutoff: 0, returnRate: 0.05 },
+          { cutoff: 1000, returnRate: 0.2 },
+          { cutoff: 5000, returnRate: 0.3 },
+          { cutoff: 10000, returnRate: 0.35 },
+          { cutoff: 20000, returnRate: 0.40 },
+          { cutoff: 50000, returnRate: 0.45 },
+          { cutoff: 100000, returnRate: 0.475 },
+          { cutoff: 250000, returnRate: 0.50 },
+          { cutoff: 500000, returnRate: 0.525 },
+          { cutoff: 1000000, returnRate: 0.55 },
+          { cutoff: 2000000, returnRate: 0.575 },
+          { cutoff: 3000000, returnRate: 0.60 },
+        ],
+        maxRebatePercentage: 0,
+        netVerticalStretch: 0,
+        verticalShift: 0,
+        vertIntercept: 0,
+        stretchiness: 0,
+        rewards: {
+          lyraRewardsCap: 200000,
+          opRewardsCap: 40000,
+          floorTokenPriceOP: 0.1,
+          floorTokenPriceLyra: 0.05,
+          lyraPortion: 0.10,
+          fixedLyraPrice: 0.14,
+          fixedOpPrice: 0.97,
+        },
+        shortCollatRewards: {
+          sBTC: {
+            tenDeltaRebatePerOptionDay: 1.333,
+            ninetyDeltaRebatePerOptionDay: 2.667,
+            longDatedPenalty: 0.5,
+          },
+          sETH: {
+            tenDeltaRebatePerOptionDay: 0.1,
+            ninetyDeltaRebatePerOptionDay: 0.2,
+            longDatedPenalty: 0.5,
+          },
+          sSOL: {
+            tenDeltaRebatePerOptionDay: 0.002,
+            ninetyDeltaRebatePerOptionDay: 0.004,
+            longDatedPenalty: 0.5,
+          }
+        },
+      },
+      MMVConfig: {
+        sETH: {
+          LYRA: 0,
+          OP: 37500,
+          x: 0.5,
+          totalStkScaleFactor: 0.2,
+          ignoreList: [],
+        },
+        sBTC: {
+          LYRA: 0,
+          OP: 6250,
+          x: 0.5,
+          totalStkScaleFactor: 0.1,
+          ignoreList: [],
+        },
+        sSOL: {
+          LYRA: 0,
+          OP: 4375,
+          x: 0.5,
+          totalStkScaleFactor: 0.1,
+          ignoreList: [],
+        },
+      },
+      stakingConfig: {
+        totalRewards: {
+          LYRA: 460273.9726027397,
+          OP: 11506.8493150685,
+        },
+      },
+    },
+    {
+      id: 'epoch-7',
+      startTimestamp: 1666742400,
+      // NOTE: endTimestamp must equal startTimestamp of next epoch otherwise you could miss trades/double count trades
+      endTimestamp: 1667952000,
+      globalIgnoreList: ['0xB6DACAE4eF97b4817d54df8e005269f509f803f9', '0xD4C00FE7657791C2A43025dE483F05E49A5f76A6', '0x64AA025819321E97Cd829b9b6c45A1424eF9a80b'],
+      enabledTradingRewardMarkets: ['sETH', 'sBTC', 'sSOL'],
+      tradingConfig: {
+        useRebateTable: true,
+        rebateRateTable: [
+          { cutoff: 0, returnRate: 0.05 },
+          { cutoff: 1000, returnRate: 0.2 },
+          { cutoff: 5000, returnRate: 0.3 },
+          { cutoff: 10000, returnRate: 0.35 },
+          { cutoff: 20000, returnRate: 0.40 },
+          { cutoff: 50000, returnRate: 0.45 },
+          { cutoff: 100000, returnRate: 0.475 },
+          { cutoff: 250000, returnRate: 0.50 },
+          { cutoff: 500000, returnRate: 0.525 },
+          { cutoff: 1000000, returnRate: 0.55 },
+          { cutoff: 2000000, returnRate: 0.575 },
+          { cutoff: 3000000, returnRate: 0.60 },
+        ],
+        maxRebatePercentage: 0,
+        netVerticalStretch: 0,
+        verticalShift: 0,
+        vertIntercept: 0,
+        stretchiness: 0,
+        rewards: {
+          lyraRewardsCap: 200000,
+          opRewardsCap: 40000,
+          floorTokenPriceOP: 0.1,
+          floorTokenPriceLyra: 0.05,
+          lyraPortion: 0.10,
+          fixedLyraPrice: 0.114,
+          fixedOpPrice: 1.20,
+        },
+        shortCollatRewards: {
+          sBTC: {
+            tenDeltaRebatePerOptionDay: 0.667,
+            ninetyDeltaRebatePerOptionDay: 1.333,
+            longDatedPenalty: 0.5
+          },
+          sETH: {
+            tenDeltaRebatePerOptionDay: 0.05,
+            ninetyDeltaRebatePerOptionDay: 0.1,
+            longDatedPenalty: 0.5,
+          },
+          sSOL: {
+            tenDeltaRebatePerOptionDay: 0.001,
+            ninetyDeltaRebatePerOptionDay: 0.002,
+            longDatedPenalty: 0.5,
+          }
+        },
+      },
+      MMVConfig: {
+        sETH: {
+          LYRA: 0,
+          OP: 49875,
+          x: 0.5,
+          totalStkScaleFactor: 0.2,
+          ignoreList: [],
+        },
+        sBTC: {
+          LYRA: 0,
+          OP: 8313,
+          x: 0.5,
+          totalStkScaleFactor: 0.1,
+          ignoreList: [],
+        },
+        sSOL: {
+          LYRA: 0,
+          OP: 5819,
           x: 0.5,
           totalStkScaleFactor: 0.1,
           ignoreList: [],
